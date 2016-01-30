@@ -71,4 +71,3 @@ deploy:
   type: git
   repository: https://github.com/procr/procr.github.io.git
   branch: master
-
