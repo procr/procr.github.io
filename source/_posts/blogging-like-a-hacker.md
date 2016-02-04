@@ -1,6 +1,6 @@
 ---
 title: Blogging like a hacker
-date: 2016-01-31
+date: 2016-01-30
 tag: 随笔
 ---
 
