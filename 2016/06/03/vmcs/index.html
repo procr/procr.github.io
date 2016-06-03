@@ -1,0 +1,40 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description"><title>关于VMCS状态变化的一些记录 | 手写的从前</title><link rel="stylesheet" type="text/css" href="/css/style.css?v=0.0.0"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/normalize/4.1.1/normalize.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/0.6.0/pure-min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/pure/0.6.0/grids-responsive-min.css"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.6.2/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.bootcss.com/jquery/2.2.3/jquery.min.js"></script><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png"></head><body><div class="body_container"><div id="header"><div class="site-name"><h1 class="hidden">关于VMCS状态变化的一些记录</h1><a id="logo" href="/.">手写的从前</a><p class="description">rongc的博客</p></div><div id="nav-menu"><a href="/." class="current"><i class="fa fa-home"> 首页</i></a><a href="/archives/"><i class="fa fa-archive"> 归档</i></a><a href="/about/"><i class="fa fa-user"> 关于</i></a><a href="/atom.xml"><i class="fa fa-rss"> 订阅</i></a></div></div><div id="layout" class="pure-g"><div class="pure-u-1 pure-u-md-3-4"><div class="content_container"><div class="post"><h1 class="post-title">关于VMCS状态变化的一些记录</h1><div class="post-meta">Jun 3, 2016<script src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js" async></script><span id="busuanzi_container_page_pv"> | <span id="busuanzi_value_page_pv"></span><span> Hits</span></span></div><div class="post-content"><h4 id="u573A_u666F"><a href="#u573A_u666F" class="headerlink" title="场景"></a>场景</h4><p>虚拟机的hyperisor很多时候会因为load balance的原因对vCPU进行调度，即从一个物理CPU迁移到另一个物理CPU。</p>
+<p>在这个时候，一般来说需要做这么几个步骤：</p>
+<ul>
+<li>De-schedule VCPU from source CPU</li>
+<li>Migrate VMCS<ul>
+<li>VMCLEAR in source CPU</li>
+<li>VMPTRLD in target CPU</li>
+</ul>
+</li>
+<li>Schedule VCPU in target CPU by VMLAUNCH (not VMRESUME)</li>
+</ul>
+<p>这篇文章讲述一下关于VMCS的一些状态变化。</p>
+<p>参考Intel开发者手册 <strong> 64-ia-32-architectures-software-developer-vol-3b-part-2-manual - volum3: virtual machine contril structures </strong></p>
+<h4 id="OVERVIEW"><a href="#OVERVIEW" class="headerlink" title="OVERVIEW"></a>OVERVIEW</h4><h5 id="u51E0_u4E2A_u8981_u70B9_uFF1A"><a href="#u51E0_u4E2A_u8981_u70B9_uFF1A" class="headerlink" title="几个要点："></a>几个要点：</h5><ul>
+<li>一个vCPU对应一个VMCS</li>
+<li>与VMCS相关的指令有：VMLAUNCH, VMREAD, VMRESUME, VMWRITE,  VMCLEAR, VMPTRLD等</li>
+<li>VMCS的状态一共有三个，分别是<ul>
+<li>active or inactive</li>
+<li>current or not current</li>
+<li>launched or clear</li>
+</ul>
+</li>
+</ul>
+<h5 id="u5173_u4E8Eactive_u548Ccurrent"><a href="#u5173_u4E8Eactive_u548Ccurrent" class="headerlink" title="关于active和current"></a>关于active和current</h5><ul>
+<li>一个物理CPU会同时维护一些VMCS，可以有多个VMCS的状态是<strong>active</strong>，但只可能有一个VMCS的状态是<strong>current</strong>的 </li>
+<li>当某一个物理CPU对某一个VMCS执行了VMPTRLD指令之后，该VMCS的状态变成active以及current。其他VMCS的active状态不会改变，但如果已经有别的VMCS的状态是current，则会变成not current。</li>
+<li>执行完VMCLEAR，该VMCS变成inactive以及not current。如果原先这个VMCS是唯一的current，那么这条指令之后没有任何current状态的VMCS存在。</li>
+</ul>
+<h5 id="u5173_u4E8Elaunched"><a href="#u5173_u4E8Elaunched" class="headerlink" title="关于launched"></a>关于launched</h5><ul>
+<li>如果状态是clear，VM-entry的时候必须使用VMLAUNCH</li>
+<li>如果状态是launched，VM-entry的时候使用VMRESUME</li>
+<li>clear状态通过VMLAUNCH之后变成了launched</li>
+<li>launched状态通过VMCLEAR之后变成了clear</li>
+<li>There are no other ways to modify the launch state of a VMCS (it cannot be modified using VMWRITE) and there is no direct way to discover it (it cannot be read using VMREAD).</li>
+</ul>
+<h5 id="u72B6_u6001_u53D8_u5316"><a href="#u72B6_u6001_u53D8_u5316" class="headerlink" title="状态变化"></a>状态变化</h5><p><img src="/img/stateofVMCS.jpg" alt="" title="vmcs"></p>
+<p>图中的是VMCS-x的状态变化情况。</p>
+<hr>
+<p>END</p>
+</div><script type="text/javascript" src="/js/share.js?v=0.0.0" async></script><a data-url="http://procr.cn/2016/06/03/vmcs/" data-id="ciozep4sl0002tcfxw8zvvhvz" class="article-share-link">分享到</a><div class="tags"><a href="/tags/虚拟化/">虚拟化</a></div><div class="post-nav"><a href="/2016/02/03/from-flag-principle-to-dekker/" class="next">软件方式的线程互斥方法的实现</a></div></div></div></div><div class="pure-u-1-4"><div id="sidebar"><div class="widget"><form action="//www.google.com/search" method="get" accept-charset="utf-8" target="_blank" class="search-form"><input type="text" name="q" maxlength="20" placeholder="Search"/><input type="hidden" name="sitesearch" value="http://procr.cn"/></form></div><div class="widget"><div class="widget-title"><i class="fa fa-folder-o"> 分类</i></div></div><div class="widget"><div class="widget-title"><i class="fa fa-star-o"> 标签</i></div><div class="tagcloud"><a href="/tags/随笔/" style="font-size: 15px;">随笔</a> <a href="/tags/虚拟化/" style="font-size: 15px;">虚拟化</a> <a href="/tags/锁/" style="font-size: 15px;">锁</a></div></div><div class="widget"><div class="widget-title"><i class="fa fa-file-o"> 最新文章</i></div><ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2016/06/03/vmcs/">关于VMCS状态变化的一些记录</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/02/03/from-flag-principle-to-dekker/">软件方式的线程互斥方法的实现</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/01/30/blogging-like-a-hacker/">Blogging like a hacker</a></li></ul></div><div class="widget"><div class="widget-title"><i class="fa fa-external-link"> 友情链接</i></div><ul></ul><a href="http://www.example1.com/" title="site-name1" target="_blank">site-name1</a><ul></ul><a href="http://www.example2.com/" title="site-name2" target="_blank">site-name2</a><ul></ul><a href="http://www.example3.com/" title="site-name3" target="_blank">site-name3</a></div></div></div><div class="pure-u-1 pure-u-md-3-4"><div id="footer">© <a href="/." rel="nofollow">手写的从前.</a> Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a><a rel="nofollow" target="_blank" href="https://github.com/tufu9441/maupassant-hexo"> Theme</a> by<a rel="nofollow" target="_blank" href="https://github.com/pagecho"> Cho.</a></div></div></div><a id="rocket" href="#top" class="show"></a><script type="text/javascript" src="/js/totop.js?v=0.0.0" async></script><script type="text/javascript" src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.0" async></script><link rel="stylesheet" type="text/css" href="/css/jquery.fancybox.css?v=0.0.0"><script type="text/javascript" src="/js/codeblock-resizer.js?v=0.0.0"></script><script type="text/javascript" src="/js/smartresize.js?v=0.0.0"></script></div></body></html>
