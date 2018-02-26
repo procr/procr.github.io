@@ -3,8 +3,8 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: 手写的从前
-subtitle: rongc的博客
+title: rongc's blog
+# subtitle: rongc的博客
 description: 
 author: rongc
 language: zh-CN
@@ -63,7 +63,8 @@ pagination_dir: page
 # Extensions
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
-theme: maupassant-hexo
+# theme: maupassant-hexo
+theme: vexo
 
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
