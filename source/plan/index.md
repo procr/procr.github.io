@@ -1,4 +1,4 @@
 ---
 title: Plan
-layout: about
+layout: project
 ---
