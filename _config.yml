@@ -3,10 +3,10 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: rongc's blog
+title: 海拉里瑞斯
 # subtitle: rongc的博客
-description: 
-author: rongc
+description:
+author: hilarious
 language: zh-CN
 timezone:
 
@@ -31,7 +31,6 @@ skip_render:
 new_post_name: :title.md # File name of new posts
 default_layout: post
 titlecase: false # Transform title into titlecase
-external_link: true # Open external links in new tab
 filename_case: 0
 render_drafts: false
 post_asset_folder: false
